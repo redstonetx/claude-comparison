@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude 1.0 vs 2.0 — A Comparative Study</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0c0a;
+      --bg2:       #131210;
+      --bg3:       #1a1815;
+      --gold:      #c8a84b;
+      --gold-dim:  #8a6e2a;
+      --cream:     #e8e0d0;
+      --muted:     #7a7060;
+      --border:    #2a2620;
+      --v1:        #4a7c8a;
+      --v1-light:  #6aacbe;
+      --v2:        #c8a84b;
+      --v2-light:  #e8c870;
+      --red:       #b85050;
+      --green:     #5a9060;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.03;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--gold-dim); }
+
+    /* ── MASTHEAD ── */
+    .masthead {
+      border-bottom: 1px solid var(--border);
+      padding: 1.2rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: rgba(13,12,10,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+    .masthead-logo {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.25em;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+    .masthead-issue {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 88vh;
+      display: grid;
+      place-items: center;
+      padding: 6rem 2rem;
+      position: relative;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 30% 60%, rgba(74,124,138,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 70% 40%, rgba(200,168,75,0.07) 0%, transparent 65%);
+    }
+    .hero-eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.4em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(4rem, 10vw, 9rem);
+      font-weight: 300;
+      line-height: 0.92;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.4s forwards;
+    }
+    .hero-title em {
+      font-style: italic;
+      color: var(--gold);
+    }
+    .hero-subtitle {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--muted);
+      margin-top: 1.5rem;
+      margin-bottom: 3rem;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.6s forwards;
+    }
+    .hero-meta {
+      display: flex;
+      gap: 2.5rem;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.8s forwards;
+    }
+    .hero-meta-item {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .hero-meta-divider {
+      width: 1px;
+      height: 2rem;
+      background: var(--border);
+    }
+    .hero-scroll {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      animation: fadeUp 0.9s 1.2s forwards;
+    }
+    .hero-scroll span {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .scroll-line {
+      width: 1px;
+      height: 3rem;
+      background: linear-gradient(to bottom, var(--gold), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+
+    /* ── SECTION WRAPPER ── */
+    .section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 5rem 2.5rem;
+    }
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0;
+    }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 1.5rem;
+      margin-bottom: 4rem;
+    }
+    .section-number {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--gold);
+      letter-spacing: 0.3em;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 300;
+      line-height: 1.1;
+    }
+    .section-title em { font-style: italic; color: var(--gold); }
+
+    /* ── OVERVIEW CARDS ── */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: 1fr 80px 1fr;
+      gap: 0;
+      align-items: start;
+    }
+    .overview-card {
+      padding: 2.5rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.7s, transform 0.7s;
+      transform: translateY(20px);
+    }
+    .overview-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .overview-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+    .overview-card.v1::before { background: var(--v1); }
+    .overview-card.v2::before { background: var(--gold); }
+    .overview-card.v2 { transition-delay: 0.15s; }
+    .card-version-tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .card-version-tag::before {
+      content: '';
+      display: block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .v1 .card-version-tag { color: var(--v1-light); }
+    .v1 .card-version-tag::before { background: var(--v1); }
+    .v2 .card-version-tag { color: var(--v2-light); }
+    .v2 .card-version-tag::before { background: var(--v2); }
+    .card-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.6rem;
+      font-weight: 300;
+      line-height: 1.1;
+      margin-bottom: 0.5rem;
+    }
+    .card-date {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      margin-bottom: 1.5rem;
+    }
+    .card-desc {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .overview-vs {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      font-style: italic;
+      color: var(--muted);
+      position: relative;
+    }
+    .overview-vs::before,
+    .overview-vs::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1px;
+      background: var(--border);
+    }
+    .overview-vs::before { top: 0; height: 40%; }
+    .overview-vs::after { bottom: 0; height: 40%; }
+
+    /* ── STAT GRID ── */
+    .stat-section {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 4rem 0;
+    }
+    .stat-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2.5rem;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+    .stat-item {
+      padding: 1.5rem 2rem;
+      border-right: 1px solid var(--border);
+      opacity: 0;
+      transition: opacity 0.6s, transform 0.6s;
+      transform: translateY(16px);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-item.visible { opacity: 1; transform: translateY(0); }
+    .stat-item:nth-child(2).visible { transition-delay: 0.1s; }
+    .stat-item:nth-child(3).visible { transition-delay: 0.2s; }
+    .stat-item:nth-child(4).visible { transition-delay: 0.3s; }
+    .stat-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.3em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+    .stat-compare {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .stat-val {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    .stat-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem;
+      font-weight: 600;
+      line-height: 1;
+    }
+    .stat-tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.55rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+    }
+    .stat-val.v1 .stat-num { color: var(--v1-light); }
+    .stat-val.v2 .stat-num { color: var(--v2-light); }
+    .stat-bar-wrap {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 0.3rem;
+    }
+    .stat-bar {
+      height: 100%;
+      border-radius: 2px;
+      width: 0;
+      transition: width 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .stat-bar.v1 { background: var(--v1); }
+    .stat-bar.v2 { background: var(--gold); }
+
+    /* ── BENCHMARK TABLE ── */
+    .bench-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .bench-table th {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0.8rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    .bench-table th.align-right { text-align: right; }
+    .bench-table td {
+      padding: 1.1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      vertical-align: middle;
+    }
+    .bench-table tr:last-child td { border-bottom: none; }
+    .bench-table tr {
+      opacity: 0;
+      transition: opacity 0.5s, transform 0.5s;
+      transform: translateX(-10px);
+    }
+    .bench-table tr.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .bench-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 400;
+    }
+    .bench-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--muted);
+      display: block;
+      margin-top: 0.1rem;
+    }
+    .bench-score {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.85rem;
+      text-align: right;
+    }
+    .bench-score.v1 { color: var(--v1-light); }
+    .bench-score.v2 { color: var(--v2-light); }
+    .bench-bar-cell { width: 180px; }
+    .bench-bar-bg {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .bench-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      width: 0;
+      transition: width 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .delta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 2px;
+    }
+    .delta-up { background: rgba(90,144,96,0.15); color: #7bc480; }
+    .delta-down { background: rgba(184,80,80,0.15); color: #d47070; }
+
+    /* ── FEATURE GRID ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .feature-header {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--bg3);
+      border-bottom: 2px solid var(--border);
+    }
+    .feature-header-cell {
+      padding: 1.2rem 2rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .fh-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .fh-v1 .fh-dot { background: var(--v1); }
+    .fh-v2 .fh-dot { background: var(--gold); }
+    .fh-v1 { color: var(--v1-light); border-right: 1px solid var(--border); }
+    .fh-v2 { color: var(--v2-light); }
+    .feature-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--bg2);
+      opacity: 0;
+      transition: opacity 0.5s, transform 0.5s;
+      transform: translateY(8px);
+    }
+    .feature-row.visible { opacity: 1; transform: translateY(0); }
+    .feature-row:hover { background: var(--bg3); }
+    .feature-cell {
+      padding: 1.3rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .feature-cell:first-child {
+      border-right: 1px solid var(--border);
+    }
+    .feat-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+    }
+    .feat-icon.yes { background: rgba(90,144,96,0.2); color: #7bc480; }
+    .feat-icon.no  { background: rgba(184,80,80,0.2); color: #d47070; }
+    .feat-icon.partial { background: rgba(200,168,75,0.15); color: var(--gold); }
+    .feat-label {
+      font-size: 0.88rem;
+    }
+    .feat-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+    .feat-category-divider {
+      grid-column: 1 / -1;
+      background: var(--bg3);
+      padding: 0.6rem 2rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      color: var(--muted);
+      text-transform: uppercase;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── CONTEXT WINDOW VISUAL ── */
+    .context-vis {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      padding: 3rem;
+      text-align: center;
+      position: relative;
+    }
+    .context-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+    .context-bars {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 3rem;
+      height: 160px;
+      margin-bottom: 1.5rem;
+    }
+    .ctx-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.8rem;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .ctx-bar {
+      width: 80px;
+      border-radius: 3px 3px 0 0;
+      transition: height 1.5s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .ctx-bar.v1 { background: var(--v1); height: 0; }
+    .ctx-bar.v2 { background: var(--gold); height: 0; }
+    .ctx-val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem;
+      font-weight: 600;
+    }
+    .ctx-val.v1 { color: var(--v1-light); }
+    .ctx-val.v2 { color: var(--v2-light); }
+    .ctx-name {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+    }
+    .ctx-multiplier {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3rem;
+      font-style: italic;
+      color: var(--gold);
+      opacity: 0.3;
+      align-self: center;
+    }
+
+    /* ── TIMELINE ── */
+    .timeline {
+      position: relative;
+      padding-left: 2rem;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.5rem;
+      bottom: 0.5rem;
+      width: 1px;
+      background: linear-gradient(to bottom, var(--v1), var(--gold));
+    }
+    .timeline-event {
+      position: relative;
+      padding: 0 0 2.5rem 2rem;
+      opacity: 0;
+      transition: opacity 0.6s, transform 0.6s;
+      transform: translateX(-10px);
+    }
+    .timeline-event.visible { opacity: 1; transform: translateX(0); }
+    .timeline-event:nth-child(2).visible { transition-delay: 0.1s; }
+    .timeline-event:nth-child(3).visible { transition-delay: 0.2s; }
+    .timeline-event:nth-child(4).visible { transition-delay: 0.3s; }
+    .timeline-event:nth-child(5).visible { transition-delay: 0.4s; }
+    .timeline-dot {
+      position: absolute;
+      left: -2.35rem;
+      top: 0.4rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+    }
+    .timeline-dot.v1 { background: var(--v1); }
+    .timeline-dot.v2 { background: var(--gold); }
+    .timeline-date {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      margin-bottom: 0.3rem;
+    }
+    .timeline-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      font-weight: 400;
+      margin-bottom: 0.4rem;
+    }
+    .timeline-title.v1 { color: var(--v1-light); }
+    .timeline-title.v2 { color: var(--v2-light); }
+    .timeline-body {
+      font-size: 0.85rem;
+      color: var(--muted);
+      max-width: 480px;
+    }
+
+    /* ── VERDICT ── */
+    .verdict-section {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .verdict-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 5rem 2.5rem;
+      display: grid;
+      grid-template-columns: 1fr 2px 1fr;
+      gap: 4rem;
+      align-items: start;
+    }
+    .verdict-divider {
+      background: var(--border);
+      align-self: stretch;
+    }
+    .verdict-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    .verdict-label.v1 { color: var(--v1-light); }
+    .verdict-label.v2 { color: var(--v2-light); }
+    .verdict-headline {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 300;
+      line-height: 1.2;
+      margin-bottom: 1.2rem;
+    }
+    .verdict-body {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+    .verdict-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+    .vtag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.58rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 2px;
+      letter-spacing: 0.1em;
+    }
+    .vtag.v1 { border: 1px solid var(--v1); color: var(--v1-light); }
+    .vtag.v2 { border: 1px solid var(--gold-dim); color: var(--v2-light); }
+
+    /* ── FOOTER ── */
+    footer {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 3rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+      margin-top: 0;
+    }
+    footer .foot-brand {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+    footer .foot-note {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.4; transform: scaleY(0.8); }
+      50%       { opacity: 1;   transform: scaleY(1); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .overview-grid { grid-template-columns: 1fr; gap: 1rem; }
+      .overview-vs { display: none; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      .stat-item:nth-child(2) { border-right: none; }
+      .verdict-inner { grid-template-columns: 1fr; gap: 2rem; }
+      .verdict-divider { display: none; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .feature-header { grid-template-columns: 1fr; }
+      .feature-cell:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+      .feature-row { grid-template-columns: 1fr; }
+      .context-bars { gap: 1.5rem; }
+      footer { flex-direction: column; gap: 1rem; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MASTHEAD -->
+  <nav class="masthead">
+    <div class="masthead-logo">Anthropic · Claude Series</div>
+    <div class="masthead-issue">Vol. II · Comparative Analysis · 2023</div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <p class="hero-eyebrow">Anthropic · Model Comparison</p>
+      <h1 class="hero-title">Claude<br><em>1.0</em> &amp; <em>2.0</em></h1>
+      <p class="hero-subtitle">A study in evolution — capability, safety, and the distance between two generations</p>
+      <div class="hero-meta">
+        <span class="hero-meta-item">Released 2023</span>
+        <span class="hero-meta-divider"></span>
+        <span class="hero-meta-item">Constitutional AI</span>
+        <span class="hero-meta-divider"></span>
+        <span class="hero-meta-item">Anthropic Research</span>
+      </div>
+    </div>
+    <div class="hero-scroll">
+      <div class="scroll-line"></div>
+      <span>Scroll</span>
+    </div>
+  </section>
+
+  <!-- STATS BAND -->
+  <div class="stat-section">
+    <div class="stat-grid">
+      <div class="stat-item" data-animate>
+        <div class="stat-label">Context Window</div>
+        <div class="stat-compare">
+          <div class="stat-val v1">
+            <span class="stat-num" data-count="9">0</span>
+            <span class="stat-tag">v1.0 · k tokens</span>
+          </div>
+          <div class="stat-bar-wrap"><div class="stat-bar v1" data-width="9"></div></div>
+          <div class="stat-val v2">
+            <span class="stat-num" data-count="100">0</span>
+            <span class="stat-tag">v2.0 · k tokens</span>
+          </div>
+          <div class="stat-bar-wrap"><div class="stat-bar v2" data-width="100"></div></div>
+        </div>
+      </div>
+      <div class="stat-item" data-animate>
+        <div class="stat-label">Bar Exam Score</div>
+        <div class="stat-compare">
+          <div class="stat-val v1">
+            <span class="stat-num" data-count="68">0</span>
+            <span class="stat-tag">v1.0 · percentile</span>
+          </div>
+          <div class="stat-bar-wrap"><div class="stat-bar v1" data-width="68"></div></div>
+          <div class="stat-val v2">
+            <span class="stat-num" data-count="76">0</span>
+            <span class="stat-tag">v2.0 · percentile</span>
+          </div>
+          <div class="stat-bar-wrap"><div class="stat-bar v2" data-width="76"></div></div>
+        </div>
+      </div>
+      <div class="stat-item" data-animate>
+        <div class="stat-label">Coding (HumanEval)</div>
+        <div class="stat-compare">
+          <div class="stat-val v1">
+            <span class="stat-num" data-count="56">0</span>
+            <span class="stat-tag">v1.0 · %</span>
+          </div>
+          <div class="stat-bar-wrap"><div class="stat-bar v1" data-width="56"></div></div>
+          <div class="stat-val v2">
+            <span class="stat-num" data-count="71">0</span>
+            <span class="stat-tag">v2.0 · %</span>
+          </div>
+          <div class="stat-bar-wrap"><div class="stat-bar v2" data-width="71"></div></div>
+        </div>
+      </div>
+      <div class="stat-item" data-animate>
+        <div class="stat-label">Graduate MMLU</div>
+        <div class="stat-compare">
+          <div class="stat-val v1">
+            <span class="stat-num" data-count="75">0</span>
+            <span class="stat-tag">v1.0 · %</span>
+          </div>
+          <div class="stat-bar-wrap"><div class="stat-bar v1" data-width="75"></div></div>
+          <div class="stat-val v2">
+            <span class="stat-num" data-count="85">0</span>
+            <span class="stat-tag">v2.0 · %</span>
+          </div>
+          <div class="stat-bar-wrap"><div class="stat-bar v2" data-width="85"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- OVERVIEW SECTION -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">§ 01</span>
+      <h2 class="section-title">Two <em>Generations</em></h2>
+    </div>
+    <div class="overview-grid">
+      <div class="overview-card v1" data-animate>
+        <div class="card-version-tag">Claude 1.0</div>
+        <div class="card-name">The<br>Foundation</div>
+        <div class="card-date">March 2023</div>
+        <p class="card-desc">
+          Anthropic's first publicly available model, built on Constitutional AI principles.
+          Claude 1.0 established the baseline for helpful, harmless, and honest AI interaction—
+          demonstrating that safety and capability could coexist. It featured a 9k token context
+          window and strong performance on conversational tasks, setting the stage for rapid iteration.
+        </p>
+      </div>
+      <div class="overview-vs">vs</div>
+      <div class="overview-card v2" data-animate>
+        <div class="card-version-tag">Claude 2.0</div>
+        <div class="card-name">The<br>Leap</div>
+        <div class="card-date">July 2023</div>
+        <p class="card-desc">
+          A significant generational improvement across every measured dimension. Claude 2.0
+          expanded the context window to 100,000 tokens—enough to process entire books—while
+          dramatically improving coding, mathematics, and long-form reasoning. Reduced harmful
+          outputs and improved safety alignment marked a new standard for responsible AI deployment.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- CONTEXT WINDOW VISUAL -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">§ 02</span>
+      <h2 class="section-title">Context <em>Expanded</em></h2>
+    </div>
+    <div class="context-vis" data-animate>
+      <div class="context-label">Token Context Window — Scale Comparison</div>
+      <div class="context-bars">
+        <div class="ctx-bar-wrap">
+          <div class="ctx-val v1">9K</div>
+          <div class="ctx-bar v1" id="ctxBar1" style="height:0"></div>
+          <div class="ctx-name">Claude 1.0</div>
+        </div>
+        <div class="ctx-multiplier">×11</div>
+        <div class="ctx-bar-wrap">
+          <div class="ctx-val v2">100K</div>
+          <div class="ctx-bar v2" id="ctxBar2" style="height:0"></div>
+          <div class="ctx-name">Claude 2.0</div>
+        </div>
+      </div>
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.1em;">
+        Claude 2.0 can process the equivalent of ~75,000 words — an entire novel — in a single context
+      </p>
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- BENCHMARKS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">§ 03</span>
+      <h2 class="section-title">Benchmark <em>Results</em></h2>
+    </div>
+    <table class="bench-table">
+      <thead>
+        <tr>
+          <th>Evaluation</th>
+          <th class="align-right">Claude 1.0</th>
+          <th></th>
+          <th class="align-right">Claude 2.0</th>
+          <th></th>
+          <th class="align-right">Delta</th>
+        </tr>
+      </thead>
+      <tbody id="benchBody">
+        <tr data-v1="68" data-v2="76">
+          <td><div class="bench-name">Bar Exam</div><span class="bench-sub">Professional legal reasoning · Percentile</span></td>
+          <td><div class="bench-score v1">68%</div></td>
+          <td class="bench-bar-cell"><div class="bench-bar-bg"><div class="bench-bar-fill" style="background:var(--v1)" data-pct="68"></div></div></td>
+          <td><div class="bench-score v2">76.5%</div></td>
+          <td class="bench-bar-cell"><div class="bench-bar-bg"><div class="bench-bar-fill" style="background:var(--gold)" data-pct="76.5"></div></div></td>
+          <td><span class="delta-badge delta-up">↑ +8.5 pts</span></td>
+        </tr>
+        <tr data-v1="56" data-v2="71">
+          <td><div class="bench-name">HumanEval</div><span class="bench-sub">Python code generation accuracy</span></td>
+          <td><div class="bench-score v1">56.0%</div></td>
+          <td class="bench-bar-cell"><div class="bench-bar-bg"><div class="bench-bar-fill" style="background:var(--v1)" data-pct="56"></div></div></td>
+          <td><div class="bench-score v2">71.2%</div></td>
+          <td class="bench-bar-cell"><div class="bench-bar-bg"><div class="bench-bar-fill" style="background:var(--gold)" data-pct="71.2"></div></div></td>
+          <td><span class="delta-badge delta-up">↑ +15.2 pts</span></td>
+        </tr>
+        <tr data-v1="75" data-v2="85">
+          <td><div class="bench-name">MMLU</div><span class="bench-sub">Multitask language understanding · Graduate level</span></td>
+          <td><div class="bench-score v1">75.0%</div></td>
+          <td class="bench-bar-cell"><div class="bench-bar-bg"><div class="bench-bar-fill" style="background:var(--v1)" data-pct="75"></div></div></td>
+          <td><div class="bench-score v2">85.0%</div></td>
+          <td class="bench-bar-cell"><div class="bench-bar-bg"><div class="bench-bar-fill" style="background:var(--gold)" data-pct="85"></div></div></td>
+          <td><span class="delta-badge delta-up">↑ +10 pts</span></td>
+        </tr>
+        <tr data-v1="38" data-v2="55">
+          <td><div class="bench-name">GSM8K</div><span class="bench-sub">Grade-school math word problems</span></td>
+          <td><div class="bench-score v1">38.9%</div></td>
+          <td class="bench-bar-cell"><div class="bench-bar-bg"><div class="bench-bar-fill" style="background:var(--v1)" data-pct="38.9"></div></div></td>
+          <td><div class="bench-score v2">55.0%</div></td>
+          <td class="bench-bar-cell"><div class="bench-bar-bg"><div class="bench-bar-fill" style="background:var(--gold)" data-pct="55"></div></div></td>
+          <td><span class="delta-badge delta-up">↑ +16.1 pts</span></td>
+        </tr>
+        <tr data-v1="62" data-v2="78">
+          <td><div class="bench-name">HELM Summarization</div><span class="bench-sub">Long-form document summarization quality</span></td>
+          <td><div class="bench-score v1">62.4%</div></td>
+          <td class="bench-bar-cell"><div class="bench-bar-bg"><div class="bench-bar-fill" style="background:var(--v1)" data-pct="62.4"></div></div></td>
+          <td><div class="bench-score v2">78.1%</div></td>
+          <td class="bench-bar-cell"><div class="bench-bar-bg"><div class="bench-bar-fill" style="background:var(--gold)" data-pct="78.1"></div></div></td>
+          <td><span class="delta-badge delta-up">↑ +15.7 pts</span></td>
+        </tr>
+        <tr>
+          <td><div class="bench-name">Harmful Output Rate</div><span class="bench-sub">Frequency of policy-violating responses (lower = better)</span></td>
+          <td><div class="bench-score v1">2.8%</div></td>
+          <td class="bench-bar-cell"><div class="bench-bar-bg"><div class="bench-bar-fill" style="background:var(--v1)" data-pct="14"></div></div></td>
+          <td><div class="bench-score v2">1.1%</div></td>
+          <td class="bench-bar-cell"><div class="bench-bar-bg"><div class="bench-bar-fill" style="background:var(--gold)" data-pct="5.5"></div></div></td>
+          <td><span class="delta-badge delta-up">↓ −61%</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- FEATURE COMPARISON -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">§ 04</span>
+      <h2 class="section-title">Feature <em>Matrix</em></h2>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-header">
+        <div class="feature-header-cell fh-v1"><span class="fh-dot"></span>Claude 1.0</div>
+        <div class="feature-header-cell fh-v2"><span class="fh-dot"></span>Claude 2.0</div>
+      </div>
+
+      <div class="feat-category-divider" style="grid-column:1/-1">Core Capabilities</div>
+
+      <div class="feature-row" data-animate>
+        <div class="feature-cell">
+          <div class="feat-icon partial">◑</div>
+          <div><div class="feat-label">Long-document Analysis</div><div class="feat-sub">Up to 9K tokens — limited book-length tasks</div></div>
+        </div>
+        <div class="feature-cell">
+          <div class="feat-icon yes">✓</div>
+          <div><div class="feat-label">Long-document Analysis</div><div class="feat-sub">Full 100K context — entire books &amp; codebases</div></div>
+        </div>
+      </div>
+
+      <div class="feature-row" data-animate>
+        <div class="feature-cell">
+          <div class="feat-icon partial">◑</div>
+          <div><div class="feat-label">Advanced Code Generation</div><div class="feat-sub">Basic to moderate coding assistance</div></div>
+        </div>
+        <div class="feature-cell">
+          <div class="feat-icon yes">✓</div>
+          <div><div class="feat-label">Advanced Code Generation</div><div class="feat-sub">71%+ HumanEval; complex multi-file reasoning</div></div>
+        </div>
+      </div>
+
+      <div class="feature-row" data-animate>
+        <div class="feature-cell">
+          <div class="feat-icon partial">◑</div>
+          <div><div class="feat-label">Multi-step Reasoning</div><div class="feat-sub">Capable but prone to mid-chain errors</div></div>
+        </div>
+        <div class="feature-cell">
+          <div class="feat-icon yes">✓</div>
+          <div><div class="feat-label">Multi-step Reasoning</div><div class="feat-sub">Improved chain-of-thought with fewer errors</div></div>
+        </div>
+      </div>
+
+      <div class="feat-category-divider" style="grid-column:1/-1">Safety &amp; Alignment</div>
+
+      <div class="feature-row" data-animate>
+        <div class="feature-cell">
+          <div class="feat-icon yes">✓</div>
+          <div><div class="feat-label">Constitutional AI</div><div class="feat-sub">Core RLHF + CAI training</div></div>
+        </div>
+        <div class="feature-cell">
+          <div class="feat-icon yes">✓</div>
+          <div><div class="feat-label">Constitutional AI</div><div class="feat-sub">Enhanced CAI with broader constitution</div></div>
+        </div>
+      </div>
+
+      <div class="feature-row" data-animate>
+        <div class="feature-cell">
+          <div class="feat-icon partial">◑</div>
+          <div><div class="feat-label">Reduced Harmful Outputs</div><div class="feat-sub">2.8% violation rate under red-teaming</div></div>
+        </div>
+        <div class="feature-cell">
+          <div class="feat-icon yes">✓</div>
+          <div><div class="feat-label">Reduced Harmful Outputs</div><div class="feat-sub">1.1% violation rate — 61% improvement</div></div>
+        </div>
+      </div>
+
+      <div class="feature-row" data-animate>
+        <div class="feature-cell">
+          <div class="feat-icon partial">◑</div>
+          <div><div class="feat-label">Nuanced Refusal Behavior</div><div class="feat-sub">Occasionally over-refuses benign requests</div></div>
+        </div>
+        <div class="feature-cell">
+          <div class="feat-icon yes">✓</div>
+          <div><div class="feat-label">Nuanced Refusal Behavior</div><div class="feat-sub">Better calibrated — fewer false positives</div></div>
+        </div>
+      </div>
+
+      <div class="feat-category-divider" style="grid-column:1/-1">Technical</div>
+
+      <div class="feature-row" data-animate>
+        <div class="feature-cell">
+          <div class="feat-icon yes">✓</div>
+          <div><div class="feat-label">API Access</div><div class="feat-sub">claude-1.x endpoints</div></div>
+        </div>
+        <div class="feature-cell">
+          <div class="feat-icon yes">✓</div>
+          <div><div class="feat-label">API Access</div><div class="feat-sub">claude-2.x endpoints with extended context</div></div>
+        </div>
+      </div>
+
+      <div class="feature-row" data-animate>
+        <div class="feature-cell">
+          <div class="feat-icon no">✗</div>
+          <div><div class="feat-label">100K Token Context</div><div class="feat-sub">Not available in 1.0 line</div></div>
+        </div>
+        <div class="feature-cell">
+          <div class="feat-icon yes">✓</div>
+          <div><div class="feat-label">100K Token Context</div><div class="feat-sub">Default on all Claude 2 API endpoints</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- TIMELINE -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">§ 05</span>
+      <h2 class="section-title">Development <em>Timeline</em></h2>
+    </div>
+    <div class="timeline">
+      <div class="timeline-event" data-animate>
+        <div class="timeline-dot v1"></div>
+        <div class="timeline-date">February 2023</div>
+        <div class="timeline-title v1">Claude 1.0 Launch</div>
+        <p class="timeline-body">Anthropic makes Claude available to the public through its API and claude.ai. The model demonstrates strong conversational ability and a distinctive character grounded in Constitutional AI training.</p>
+      </div>
+      <div class="timeline-event" data-animate>
+        <div class="timeline-dot v1"></div>
+        <div class="timeline-date">March — May 2023</div>
+        <div class="timeline-title v1">Claude 1.x Iterations</div>
+        <p class="timeline-body">Rapid point releases refine Claude 1's behavior, improve instruction-following, and reduce false refusals. Anthropic gathers extensive red-teaming data to inform the next major release.</p>
+      </div>
+      <div class="timeline-event" data-animate>
+        <div class="timeline-dot v2"></div>
+        <div class="timeline-date">July 11, 2023</div>
+        <div class="timeline-title v2">Claude 2.0 Announced</div>
+        <p class="timeline-body">A landmark release. Anthropic ships Claude 2 with a 100K token context window, substantially improved coding and mathematical reasoning, and measurably lower harmful output rates — available on both claude.ai and the API.</p>
+      </div>
+      <div class="timeline-event" data-animate>
+        <div class="timeline-dot v2"></div>
+        <div class="timeline-date">November 2023</div>
+        <div class="timeline-title v2">Claude 2.1 Released</div>
+        <p class="timeline-body">An incremental improvement extending context to 200K tokens, adding tool use capabilities, and reducing hallucination rates — further cementing Claude 2 as the gold standard for long-context reasoning.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- VERDICT -->
+  <div class="verdict-section">
+    <div class="verdict-inner">
+      <div>
+        <div class="verdict-label v1">Claude 1.0 · Legacy</div>
+        <h3 class="verdict-headline">The model that proved AI could be principled</h3>
+        <p class="verdict-body">
+          Claude 1.0 was significant not just as a capable model, but as a demonstration that
+          Constitutional AI could work at scale. For most conversational tasks, summarization,
+          and moderate-length document processing, it performed admirably and laid critical
+          groundwork for every Claude model that followed.
+        </p>
+        <div class="verdict-tags">
+          <span class="vtag v1">Conversational</span>
+          <span class="vtag v1">9K Context</span>
+          <span class="vtag v1">Constitutional AI Pioneer</span>
+          <span class="vtag v1">Foundational</span>
+        </div>
+      </div>
+      <div class="verdict-divider"></div>
+      <div>
+        <div class="verdict-label v2">Claude 2.0 · Current</div>
+        <h3 class="verdict-headline">The leap that redefined what long-context AI can do</h3>
+        <p class="verdict-body">
+          Claude 2.0 is not a refinement — it is a generational jump. The 100K context window
+          alone unlocks entirely new use cases: full codebase analysis, book-length summarization,
+          and extended reasoning chains. Combined with benchmark improvements across coding,
+          math, and law, Claude 2.0 set the new frontier for safe and capable AI.
+        </p>
+        <div class="verdict-tags">
+          <span class="vtag v2">100K Context</span>
+          <span class="vtag v2">Advanced Coding</span>
+          <span class="vtag v2">Safer Alignment</span>
+          <span class="vtag v2">Production-Grade</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="foot-brand">Anthropic · Claude Comparative Study</div>
+    <div class="foot-note">Data sourced from Anthropic model cards &amp; public evaluations · 2023</div>
+  </footer>
+
+  <script>
+    /* ── INTERSECTION OBSERVER ── */
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+
+        el.classList.add('visible');
+
+        // Stat bars
+        el.querySelectorAll('.stat-bar[data-width]').forEach(bar => {
+          bar.style.width = bar.dataset.width + '%';
+        });
+
+        // Count-up numbers
+        el.querySelectorAll('[data-count]').forEach(num => {
+          const target = +num.dataset.count;
+          let current = 0;
+          const step = target / 40;
+          const tick = setInterval(() => {
+            current = Math.min(current + step, target);
+            num.textContent = Math.round(current);
+            if (current >= target) clearInterval(tick);
+          }, 25);
+        });
+
+        // Bench bar fills
+        el.querySelectorAll('.bench-bar-fill[data-pct]').forEach(bar => {
+          bar.style.width = bar.dataset.pct + '%';
+        });
+
+        // Context bars
+        if (el.id === 'ctxBar1') el.style.height = '13px';
+        if (el.id === 'ctxBar2') el.style.height = '140px';
+
+        io.unobserve(el);
+      });
+    }, { threshold: 0.15 });
+
+    // Observe all animatable elements
+    document.querySelectorAll('[data-animate], .overview-card, .stat-item, .bench-table tr, .feature-row, .timeline-event').forEach(el => {
+      io.observe(el);
+    });
+
+    // Context bars need special handling
+    const ctxWrap = document.querySelector('.context-vis');
+    if (ctxWrap) {
+      const ctxObs = new IntersectionObserver((entries) => {
+        if (!entries[0].isIntersecting) return;
+        setTimeout(() => {
+          document.getElementById('ctxBar1').style.height = '13px';
+          document.getElementById('ctxBar2').style.height = '140px';
+        }, 300);
+        ctxObs.unobserve(ctxWrap);
+      }, { threshold: 0.3 });
+      ctxObs.observe(ctxWrap);
+    }
+
+    // Bench rows stagger
+    document.querySelectorAll('.bench-table tr').forEach((row, i) => {
+      row.style.transitionDelay = i * 0.08 + 's';
+    });
+
+    // Feature rows stagger
+    document.querySelectorAll('.feature-row').forEach((row, i) => {
+      row.style.transitionDelay = i * 0.07 + 's';
+    });
+  </script>
+</body>
+</html>
